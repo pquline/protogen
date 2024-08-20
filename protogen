@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Base directory containing your subdirectories with .c files
+BASE_DIR="srcs"
+
+# Temporary file to hold function prototypes
+TEMP_FILE=$(mktemp)
+
+# Function to print section separator based on subdirectory name
+print_separator() {
+    local subdir_name=$1
+    local total_length=80
+    local name_length=${#subdir_name}
+    local dashes_total=$(( total_length - name_length - 8 ))  # Total dashes minus spaces and comment markers
+    local dashes_right=$(( dashes_total / 2 ))
+    local dashes_left=$(( dashes_total - dashes_right ))
+
+    # Construct the separator line
+    local separator
+    separator=$(printf "/* ")
+    separator+=$(printf "%${dashes_left}s" "-" | tr ' ' '-')  # Left dashes
+    separator+=" ${subdir_name} "
+    separator+=$(printf "%${dashes_right}s" "-" | tr ' ' '-')  # Right dashes
+    separator+=$(printf " */")
+
+    # Print the separator line
+    echo "$separator"
+}
+
+# Find and sort all subdirectories within BASE_DIR
+find "$BASE_DIR" -mindepth 1 -maxdepth 1 -type d | sort | while read -r subdir; do
+    subdir_name=$(basename "$subdir" | tr '[:lower:]' '[:upper:]')
+
+    # Print section header as a comment
+    print_separator "$subdir_name"
+    echo ""
+
+    # Find all .c files in the current subdirectory
+    find "$subdir" -type f -name "*.c" | while read -r file; do
+        # Use grep to filter out lines that have a return type followed by a tab and function name with parameters
+        grep -E '^[^ ]+\t[^ ]+\(.*\)$' "$file" | grep -v '^static' | grep -Ev '\tmain\(' >> "$TEMP_FILE"
+    done
+
+    # Sort the function prototypes by return type (first column) and then by function name (second column)
+    sort -t$'\t' -k1,1 -k2,2 "$TEMP_FILE" | awk '
+    BEGIN {
+        current_return_type = "";
+    }
+    {
+        # Extract the return type (field 1) and function name (field 2)
+        return_type = $1;
+        function_prototype = $0;
+
+        # Normalize return type by removing any leading/trailing spaces or tabs
+        gsub(/^[ \t]+|[ \t]+$/, "", return_type);
+
+        # Prepare return type for comparison (remove spaces between asterisks and characters)
+        gsub(/[ \t]+/, " ", return_type);
+
+        if (return_type != current_return_type) {
+            # If the return type has changed, print a blank line
+            if (current_return_type != "") {
+                print "";
+            }
+            current_return_type = return_type;
+        }
+
+        # Print the function prototype with a semicolon
+        print function_prototype ";";
+    }
+    '
+
+    # Print a blank line after each subdirectory's section
+    echo
+
+    # Clear the temporary file for the next section
+    > "$TEMP_FILE"
+done
+
+# Remove the temporary file
+rm "$TEMP_FILE"
