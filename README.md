@@ -1,6 +1,6 @@
 # PROTOGEN
 
-`protogen` is a Bash script designed to automate the process of extracting and organizing function prototypes from C source files. This script scans through your project's directory structure, identifies all `.c` files, and extracts their function prototypes, excluding `static` functions and `main`. It then formats and prints them, grouped by subdirectory and sorted by return type and function name.
+[`protogen`](./protogen) is a Bash script designed to automate the process of extracting and organizing function prototypes from C source files. This script scans through your project's directory structure, identifies all `.c` files, and extracts their function prototypes, excluding `static` functions and `main`. It then formats and prints them, grouped by subdirectory and sorted by return type and function name.
 
 ## Table of Contents
 
@@ -9,6 +9,7 @@
 - [Installation](#installation)
 - [Project Structure](#project-structure)
 - [Script Breakdown](#script-breakdown)
+- [Example Output](#example-output)
 - [Customization](#customization)
 - [Contributing](#contributing)
 
@@ -83,6 +84,30 @@ Here's a breakdown of what the script does:
 - Section Headers: For each subdirectory, the script generates a comment header based on the directory name, formatted as a section separator.
 - Function Extraction: The script finds all .c files in each subdirectory, extracts non-static function prototypes, and filters out the main function.
 - Sorted Output: The extracted prototypes are sorted by return type and function name, and then printed, grouped by subdirectory.
+
+## Example Output
+
+Here's an example of what the output might look like when you run the script:
+
+```c
+/* --------------------------------- FOLDER1 -------------------------------- */
+
+char	function2(char c);
+
+t_var	*function4(void *content);
+
+void	function1(t_var *var);
+void	function3(t_var *var);
+
+/* --------------------------------- FOLDER2 -------------------------------- */
+
+int	function6(int a, int b);
+
+void	function5(char **argv);
+void	function7(char *string);
+```
+
+This output can be directly included in your header file.
 
 ## Customization
 
